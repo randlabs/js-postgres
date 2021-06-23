@@ -1,0 +1,9 @@
+*.~*
+*.tgz
+.npm
+.eslintcache
+.node_repl_history
+package-lock.json
+build/
+node_modules/
+test/logs/

@@ -1,0 +1,51 @@
+{
+	"name": "@randlabs/js-postgres",
+	"version": "1.0.0",
+	"description": "An augmented Postgres database wrapper for RandLabs apps",
+	"main": "build/index.js",
+	"types": "build/index.d.ts",
+	"files": [
+		"build",
+		"src/**/*.ts"
+	],
+	"scripts": {
+		"build": "rimraf build && webpack",
+		"prepack": "npm run build"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/randlabs/js-postgres.git"
+	},
+	"keywords": [
+		"postgres",
+		"database"
+	],
+	"author": "RandLabs IO",
+	"license": "Apache-2.0",
+	"bugs": {
+		"url": "https://github.com/randlabs/js-postgres/issues"
+	},
+	"homepage": "https://github.com/randlabs/js-postgres#readme.md",
+	"dependencies": {
+		"bignumber.js": "^9.0.1",
+		"moment": "^2.29.1",
+		"pg": "^8.6.0"
+	},
+	"devDependencies": {
+		"@types/node": "^14.14.14",
+		"@types/pg": "^8.6.0",
+		"@typescript-eslint/eslint-plugin": "^3.10.1",
+		"@typescript-eslint/parser": "^3.10.1",
+		"builtins": "^4.0.0",
+		"dts-bundle-generator": "^5.9.0",
+		"eslint": "^7.16.0",
+		"rimraf": "^3.0.2",
+		"terser-webpack-plugin": "^5.1.3",
+		"ts-loader": "^9.2.3",
+		"ts-loader-declaration-export-plugin": "^1.0.2",
+		"tslib": "^2.0.3",
+		"typescript": "^4.1.3",
+		"webpack": "^5.38.1",
+		"webpack-cli": "^4.7.2"
+	}
+}
