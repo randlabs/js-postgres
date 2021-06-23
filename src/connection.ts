@@ -223,7 +223,6 @@ export class Connection {
 		const columns: string[] = [];
 		const columnValues: string[] = [];
 
-		const conflictColumns: string[] = [];
 		const upsertColumns: string[] = [];
 
 		for (const columnName in values) {
@@ -237,41 +236,19 @@ export class Connection {
 
 					columnValues.push("$" + params.length.toString());
 
-					switch (conflictAction) {
-						case ConflictAction.Ignore:
-							if (options!.conflictKeys!.includes(columnName)) {
-								conflictColumns.push(sanitizedColumnName);
-							}
-							break;
-
-						case ConflictAction.Update:
-							if (options!.conflictKeys!.includes(columnName)) {
-								conflictColumns.push(sanitizedColumnName);
-							}
-							else {
-								upsertColumns.push(sanitizedColumnName + " = $" + params.length.toString());
-							}
-							break;
+					if (conflictAction == ConflictAction.Update) {
+						if (!(options!.conflictKeys!.includes(columnName))) {
+							upsertColumns.push(sanitizedColumnName + " = $" + params.length.toString());
+						}
 					}
 				}
 				else {
 					columnValues.push(values[columnName].raw);
 
-					switch (conflictAction) {
-						case ConflictAction.Ignore:
-							if (options!.conflictKeys!.includes(columnName)) {
-								conflictColumns.push(sanitizedColumnName);
-							}
-							break;
-
-						case ConflictAction.Update:
-							if (options!.conflictKeys!.includes(columnName)) {
-								conflictColumns.push(sanitizedColumnName);
-							}
-							else {
-								upsertColumns.push(sanitizedColumnName + " = " + values[columnName].raw);
-							}
-							break;
+					if (conflictAction == ConflictAction.Update) {
+						if (!(options!.conflictKeys!.includes(columnName))) {
+							upsertColumns.push(sanitizedColumnName + " = " + values[columnName].raw);
+						}
 					}
 				}
 			}
@@ -285,6 +262,13 @@ export class Connection {
 
 		// Check if we must handle the curse of action on conflicts
 		if (conflictAction == ConflictAction.Ignore || conflictAction == ConflictAction.Update) {
+			const conflictColumns: string[] = [];
+			for (const columnName of options!.conflictKeys!) {
+				const sanitizedColumnName = this.client.escapeIdentifier(columnName);
+
+				conflictColumns.push(sanitizedColumnName);
+			}
+
 			sql.push(") ON CONFLICT (");
 			sql.push(conflictColumns.join(","));
 

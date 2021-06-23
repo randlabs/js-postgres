@@ -1,6 +1,6 @@
 {
 	"name": "@randlabs/js-postgres",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "An augmented Postgres database wrapper for RandLabs apps",
 	"main": "build/index.js",
 	"types": "build/index.d.ts",
