@@ -466,7 +466,7 @@ export class Connection {
 				}
 			}
 			sql.push(" WHERE ");
-			sql.push(conditions.join(", "));
+			sql.push(conditions.join(" AND "));
 		}
 	}
 
