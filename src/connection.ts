@@ -100,7 +100,7 @@ export interface WhereCondition {
 	/**
 	 * value: The value to check.
 	 */
-	value: any;
+	value?: any;
 
 	/**
 	 * operator: The conditional operator to use in evaluation.
@@ -119,7 +119,12 @@ export interface WhereCondition {
  * @enum WhereConditionOperator
  */
 export enum WhereConditionOperator {
-	Equal = 0, NotEqual, Less, LessOrEqual, Greater, GreaterOrEqual, Between
+	Equal = 0, NotEqual,
+	Less, LessOrEqual,
+	Greater, GreaterOrEqual,
+	Between,
+	IsNull, IsNotNull,
+	Like
 }
 
 /**
@@ -421,9 +426,13 @@ export class Connection {
 					const sanitizedColumnName = this.client.escapeIdentifier(whereItem);
 
 					if (isWhereCondition(where[whereItem])) {
-						params.push((where[whereItem] as WhereCondition).value);
+						const operator = (where[whereItem] as WhereCondition).operator;
 
-						switch ((where[whereItem] as WhereCondition).operator) {
+						if (operator != WhereConditionOperator.IsNull && operator != WhereConditionOperator.IsNotNull) {
+							params.push((where[whereItem] as WhereCondition).value);
+						}
+
+						switch (operator) {
 							case WhereConditionOperator.Equal:
 								conditions.push(sanitizedColumnName + " = $" + params.length.toString());
 								break;
@@ -453,6 +462,18 @@ export class Connection {
 
 								conditions.push(sanitizedColumnName + " BETWEEN $" + (params.length - 1).toString() +
 									" AND $" + params.length.toString());
+								break;
+
+							case WhereConditionOperator.IsNull:
+								conditions.push(sanitizedColumnName + " IS NULL");
+								break;
+
+							case WhereConditionOperator.IsNotNull:
+								conditions.push(sanitizedColumnName + " IS NOT NULL");
+								break;
+
+							case WhereConditionOperator.Like:
+								conditions.push(sanitizedColumnName + " LIKE $" + params.length.toString());
 								break;
 						}
 					}
@@ -493,7 +514,5 @@ function isRawValue(value: any): boolean {
 }
 
 function isWhereCondition(value: any): boolean {
-	return (value != null && typeof value === "object" &&
-			(value as WhereCondition).value != null &&
-			(value as WhereCondition).operator != null);
+	return (value != null && typeof value === "object" && (value as WhereCondition).operator != null);
 }
