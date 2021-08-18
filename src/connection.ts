@@ -41,7 +41,7 @@ export interface InsertOptions {
 	/**
 	 * conflictAction: Optional action to take if the row being inserted already exists.
 	 */
-	conflictAction?: 'update' | 'ignore';
+	conflictAction?: "update" | "ignore";
 
 	/**
 	 * conflictKeys: Optional array of keys containing the columns to evaluate.
@@ -211,10 +211,10 @@ export class Connection {
 		// Parse conflict action
 		let conflictAction = ConflictAction.None;
 		if (options) {
-			if (options.conflictAction === 'update') {
+			if (options.conflictAction === "update") {
 				conflictAction = ConflictAction.Update;
 			}
-			else if (options.conflictAction === 'ignore') {
+			else if (options.conflictAction === "ignore") {
 				conflictAction = ConflictAction.Ignore;
 			}
 		}
@@ -231,7 +231,7 @@ export class Connection {
 
 				columns.push(sanitizedColumnName);
 
-				if (!(typeof values[columnName] === 'object' && typeof values[columnName].raw === 'string')) {
+				if (!isRawValue(values[columnName])) {
 					params.push(values[columnName]);
 
 					columnValues.push("$" + params.length.toString());
@@ -317,7 +317,7 @@ export class Connection {
 			if (Object.prototype.hasOwnProperty.call(values, columnName)) {
 				const sanitizedColumnName = this.client.escapeIdentifier(columnName);
 
-				if (!(typeof values[columnName] === 'object' && typeof values[columnName].raw === 'string')) {
+				if (!isRawValue(values[columnName])) {
 					params.push(values[columnName]);
 
 					columnValues.push(sanitizedColumnName + " = $" + params.length.toString());
@@ -420,9 +420,7 @@ export class Connection {
 				if (Object.prototype.hasOwnProperty.call(where, whereItem)) {
 					const sanitizedColumnName = this.client.escapeIdentifier(whereItem);
 
-					if (typeof where[whereItem] === "object" &&
-							(where[whereItem] as WhereCondition).value != null &&
-							(where[whereItem] as WhereCondition).operator != null) {
+					if (isWhereCondition(where[whereItem])) {
 						params.push((where[whereItem] as WhereCondition).value);
 
 						switch ((where[whereItem] as WhereCondition).operator) {
@@ -486,4 +484,16 @@ export class Connection {
 			sql.push(expressions.join(", "));
 		}
 	}
+}
+
+//------------------------------------------------------------------------------
+
+function isRawValue(value: any): boolean {
+	return (value != null && typeof value === "object" && typeof value.raw === "string");
+}
+
+function isWhereCondition(value: any): boolean {
+	return (value != null && typeof value === "object" &&
+			(value as WhereCondition).value != null &&
+			(value as WhereCondition).operator != null);
 }
