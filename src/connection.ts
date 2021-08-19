@@ -41,7 +41,7 @@ export interface InsertOptions {
 	/**
 	 * conflictAction: Optional action to take if the row being inserted already exists.
 	 */
-	conflictAction?: 'update' | 'ignore';
+	conflictAction?: "update" | "ignore";
 
 	/**
 	 * conflictKeys: Optional array of keys containing the columns to evaluate.
@@ -100,7 +100,7 @@ export interface WhereCondition {
 	/**
 	 * value: The value to check.
 	 */
-	value: any;
+	value?: any;
 
 	/**
 	 * operator: The conditional operator to use in evaluation.
@@ -119,7 +119,12 @@ export interface WhereCondition {
  * @enum WhereConditionOperator
  */
 export enum WhereConditionOperator {
-	Equal = 0, NotEqual, Less, LessOrEqual, Greater, GreaterOrEqual, Between
+	Equal = 0, NotEqual,
+	Less, LessOrEqual,
+	Greater, GreaterOrEqual,
+	Between,
+	IsNull, IsNotNull,
+	Like
 }
 
 /**
@@ -211,10 +216,10 @@ export class Connection {
 		// Parse conflict action
 		let conflictAction = ConflictAction.None;
 		if (options) {
-			if (options.conflictAction === 'update') {
+			if (options.conflictAction === "update") {
 				conflictAction = ConflictAction.Update;
 			}
-			else if (options.conflictAction === 'ignore') {
+			else if (options.conflictAction === "ignore") {
 				conflictAction = ConflictAction.Ignore;
 			}
 		}
@@ -231,7 +236,7 @@ export class Connection {
 
 				columns.push(sanitizedColumnName);
 
-				if (!(typeof values[columnName] === 'object' && typeof values[columnName].raw === 'string')) {
+				if (!isRawValue(values[columnName])) {
 					params.push(values[columnName]);
 
 					columnValues.push("$" + params.length.toString());
@@ -317,7 +322,7 @@ export class Connection {
 			if (Object.prototype.hasOwnProperty.call(values, columnName)) {
 				const sanitizedColumnName = this.client.escapeIdentifier(columnName);
 
-				if (!(typeof values[columnName] === 'object' && typeof values[columnName].raw === 'string')) {
+				if (!isRawValue(values[columnName])) {
 					params.push(values[columnName]);
 
 					columnValues.push(sanitizedColumnName + " = $" + params.length.toString());
@@ -420,12 +425,14 @@ export class Connection {
 				if (Object.prototype.hasOwnProperty.call(where, whereItem)) {
 					const sanitizedColumnName = this.client.escapeIdentifier(whereItem);
 
-					if (typeof where[whereItem] === "object" &&
-							(where[whereItem] as WhereCondition).value != null &&
-							(where[whereItem] as WhereCondition).operator != null) {
-						params.push((where[whereItem] as WhereCondition).value);
+					if (isWhereCondition(where[whereItem])) {
+						const operator = (where[whereItem] as WhereCondition).operator;
 
-						switch ((where[whereItem] as WhereCondition).operator) {
+						if (operator != WhereConditionOperator.IsNull && operator != WhereConditionOperator.IsNotNull) {
+							params.push((where[whereItem] as WhereCondition).value);
+						}
+
+						switch (operator) {
 							case WhereConditionOperator.Equal:
 								conditions.push(sanitizedColumnName + " = $" + params.length.toString());
 								break;
@@ -455,6 +462,18 @@ export class Connection {
 
 								conditions.push(sanitizedColumnName + " BETWEEN $" + (params.length - 1).toString() +
 									" AND $" + params.length.toString());
+								break;
+
+							case WhereConditionOperator.IsNull:
+								conditions.push(sanitizedColumnName + " IS NULL");
+								break;
+
+							case WhereConditionOperator.IsNotNull:
+								conditions.push(sanitizedColumnName + " IS NOT NULL");
+								break;
+
+							case WhereConditionOperator.Like:
+								conditions.push(sanitizedColumnName + " LIKE $" + params.length.toString());
 								break;
 						}
 					}
@@ -486,4 +505,14 @@ export class Connection {
 			sql.push(expressions.join(", "));
 		}
 	}
+}
+
+//------------------------------------------------------------------------------
+
+function isRawValue(value: any): boolean {
+	return (value != null && typeof value === "object" && typeof value.raw === "string");
+}
+
+function isWhereCondition(value: any): boolean {
+	return (value != null && typeof value === "object" && (value as WhereCondition).operator != null);
 }
